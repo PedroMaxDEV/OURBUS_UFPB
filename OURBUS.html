@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OURBUS - MVP</title>
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Firebase v10 (modular CDN) -->
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+  <style>
+    :root{--bg:#0b0e12;--card:#121621;--muted:#8ea2b1;--accent:#2dd4bf;--danger:#f97316;--text:#e6eef5;}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:12px}
+    header{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;padding:12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    header h1{font-size:20px;margin:0;letter-spacing:.5px}
+    header .right{display:flex;gap:8px;align-items:center}
+    button,select{border:0;border-radius:12px;padding:10px 14px;background:#1c2233;color:var(--text);cursor:pointer;font-weight:600}
+    button.primary{background:var(--accent);color:#0b0e12}
+    button.danger{background:var(--danger);color:#0b0e12}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    #map{height:70vh;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .panel{background:var(--card);border-radius:16px;padding:12px 16px}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .badge{background:#1c2233;padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .legend{display:flex;gap:12px;margin-top:6px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .blue{background:var(--accent)}
+    .orange{background:var(--danger)}
+    .muted{color:var(--muted)}
+    .footer{opacity:.7;text-align:center;font-size:12px;margin:12px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>OURBUS • Mapa colaborativo</h1>
+      <div class="right">
+        <select id="route">
+          <option value="intercampi">Linha intercampi</option>
+          <option value="campus-a-b">Campus A ⇄ B</option>
+        </select>
+        <button id="signinBtn" class="primary">Entrar (anônimo)</button>
+        <button id="shareBtn">Estou no ônibus</button>
+        <button id="waitBtn" class="danger">Espera eu!</button>
+      </div>
+    </header>
+
+    <div id="map"></div>
+
+    <section class="panel">
+      <div class="row">
+        <span class="badge">Status: <span id="status">offline</span></span>
+        <span class="badge">Usuário: <span id="uid">-</span></span>
+        <span class="badge">Rota: <span id="routeLabel">intercampi</span></span>
+      </div>
+      <div class="legend">
+        <div class="dot blue"></div><span class="muted">Pessoas no ônibus (vivo, últimos 90s)</span>
+        <div class="dot orange"></div><span class="muted">Pedidos "Espera eu!" (últimos 5 min)</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:6px 0 10px">Horários previstos (exemplo)</h3>
+      <div class="muted">Edite no código conforme a sua faculdade.</div>
+      <ul id="schedule"></ul>
+    </section>
+
+    <div class="footer">Feito como MVP educativo. Sem garantia. Use com responsabilidade.</div>
+  </div>
+
+  <script type="module">
+const firebaseConfig = {
+
+  apiKey: "AIzaSyDh1wQX2Mu-AdJ841kMS6t1tq1qhI90yfA",
+
+  authDomain: "ourbus-a9ef4.firebaseapp.com",
+
+  projectId: "ourbus-a9ef4",
+
+  storageBucket: "ourbus-a9ef4.firebasestorage.app",
+
+  messagingSenderId: "612533394400",
+
+  appId: "1:612533394400:web:52f2b08b3c887b8ea0a985",
+
+  measurementId: "G-V2MTHGSY45"
+
+};
+
+
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, limit, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    // Firebase init
+    const appFB = initializeApp(firebaseConfig);
+    const auth = getAuth(appFB);
+    const db = getFirestore(appFB);
+
+    // UI refs
+    const signinBtn = document.getElementById('signinBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const waitBtn = document.getElementById('waitBtn');
+    const statusEl = document.getElementById('status');
+    const uidEl = document.getElementById('uid');
+    const routeSel = document.getElementById('route');
+    const routeLabel = document.getElementById('routeLabel');
+
+    // Map init (Leaflet + OpenStreetMap)
+    const map = L.map('map');
+    const defaultPos = [-3.7366, -38.5426]; // Fortaleza/CE - ajuste se quiser
+    map.setView(defaultPos, 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+    // Markers layers
+    const busLayer = L.layerGroup().addTo(map); // pessoas no ônibus
+    const waitLayer = L.layerGroup().addTo(map); // pedidos "espera eu"
+
+    // State
+    let currentUser = null;
+    let sharing = false;
+    let geoWatchId = null;
+
+    // Schedules (exemplo)
+    const schedules = [
+      { rota: 'intercampi', saida: '07:30', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '12:00', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '17:30', origem: 'Campus B', destino: 'Campus A' },
+    ];
+    const scheduleUL = document.getElementById('schedule');
+    function renderSchedule(){
+      scheduleUL.innerHTML = schedules
+        .filter(s=>s.rota===routeSel.value)
+        .map(s=>`<li>${s.saida} — ${s.origem} → ${s.destino}</li>`)
+        .join('');
+    }
+    renderSchedule();
+
+    routeSel.addEventListener('change', ()=>{
+      routeLabel.textContent = routeSel.value;
+      renderSchedule();
+      // refiltra realtime (camadas se autoadaptam pelo campo route)
+    });
+
+    // Auth
+    signinBtn.addEventListener('click', async ()=>{
+      try { await signInAnonymously(auth); }
+      catch(e){ alert('Falha ao entrar: '+e.message); }
+    });
+
+    onAuthStateChanged(auth, (user)=>{
+      currentUser = user;
+      uidEl.textContent = user? user.uid.slice(0,6)+'…' : '-';
+      statusEl.textContent = user? 'online' : 'offline';
+      shareBtn.disabled = !user;
+      waitBtn.disabled = !user;
+    });
+
+    // Compartilhar localização (pings)
+    shareBtn.addEventListener('click', ()=>{
+      if (!currentUser) return alert('Entre primeiro (anônimo).');
+      sharing = !sharing;
+      shareBtn.textContent = sharing? 'Parar de compartilhar' : 'Estou no ônibus';
+      if (sharing) startSharing(); else stopSharing();
+    });
+
+    function startSharing(){
+      if (!('geolocation' in navigator)) { alert('Geolocalização não suportada.'); return; }
+      geoWatchId = navigator.geolocation.watchPosition(async pos=>{
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        try{
+          await addDoc(collection(db,'bus_pings'),{
+            userId: currentUser.uid,
+            route: routeSel.value,
+            lat,lng,accuracy,
+            ts: serverTimestamp()
+          });
+        }catch(e){ console.error(e); }
+      }, err=>{ console.warn(err); }, { enableHighAccuracy:true, maximumAge:5000, timeout:15000 });
+    }
+    function stopSharing(){
+      if (geoWatchId!==null) navigator.geolocation.clearWatch(geoWatchId);
+      geoWatchId=null;
+    }
+
+    // Espera eu (pedido com TTL ~5 min)
+    waitBtn.addEventListener('click', async ()=>{
+      if (!currentUser) return alert('Entre primeiro.');
+      if (!('geolocation' in navigator)) { alert('Geolocalização não suportada.'); return; }
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        try{
+          await addDoc(collection(db,'wait_requests'),{
+            userId: currentUser.uid,
+            route: routeSel.value,
+            lat,lng,accuracy,
+            ts: serverTimestamp()
+          });
+          alert('Pedido enviado por 5 minutos.');
+        }catch(e){ console.error(e); }
+      }, err=>alert(err.message));
+    });
+
+    // Realtime listeners (mostrar últimos pings 90s e waits 5min)
+    const nowMs = ()=>Date.now();
+    const SECS = (n)=> n*1000;
+
+    // Bus pings (render múltiplos marcadores ativos)
+    onSnapshot(query(collection(db,'bus_pings'), orderBy('ts','desc'), limit(200)), snap=>{
+      busLayer.clearLayers();
+      const cutoff = nowMs()-SECS(90);
+      snap.docs.forEach(d=>{
+        const data = d.data();
+        const ts = data.ts?.toMillis?.() ?? 0;
+        if (data.route!==routeSel.value) return;
+        if (ts<cutoff) return;
+        L.circleMarker([data.lat, data.lng], { radius: 8, weight: 2, color: '#2dd4bf' })
+          .bindPopup(`<b>Ônibus (colab)</b><br/>~${Math.round(data.accuracy||0)}m`)
+          .addTo(busLayer);
+      });
+    });
+
+    // Wait requests
+    onSnapshot(query(collection(db,'wait_requests'), orderBy('ts','desc'), limit(200)), snap=>{
+      waitLayer.clearLayers();
+      const cutoff = nowMs()-SECS(300);
+      snap.docs.forEach(d=>{
+        const data = d.data();
+        const ts = data.ts?.toMillis?.() ?? 0;
+        if (data.route!==routeSel.value) return;
+        if (ts<cutoff) return;
+        L.circleMarker([data.lat, data.lng], { radius: 10, weight: 2, color: '#f97316' })
+          .bindPopup(`<b>Espera eu!</b><br/>~${Math.round(data.accuracy||0)}m`)
+          .addTo(waitLayer);
+      });
+    });
+
+    // Dica de regras Firestore (cole em Regras de segurança):
+    /*
+    
+    */
+  </script>
+</body>
+</html>
