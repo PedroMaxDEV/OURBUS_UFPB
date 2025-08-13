@@ -117,7 +117,7 @@
 
     // Map init (Leaflet + OpenStreetMap)
     const map = L.map('map');
-    const defaultPos = [-3.7366, -38.5426]; // Fortaleza/CE - ajuste se quiser
+   const defaultPos = { lat: -7.135742, lng: -34.845412 }; // UFPB - Sede João Pessoa
     map.setView(defaultPos, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
