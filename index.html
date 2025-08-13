@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OURBUS - MVP</title>
+  <title>OURBUS - NOSSO ONIBUS</title>
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -66,12 +66,12 @@
     </section>
 
     <section class="panel">
-      <h3 style="margin:6px 0 10px">Horários previstos (exemplo)</h3>
-      <div class="muted">Edite no código conforme a sua faculdade.</div>
+      <h3 style="margin:6px 0 10px">Horários previstos</h3>
+      <div class="muted"></div>
       <ul id="schedule"></ul>
     </section>
 
-    <div class="footer">Feito como MVP educativo. Sem garantia. Use com responsabilidade.</div>
+    <div class="footer">Feito por pedro gostoso</div>
   </div>
 
   <script type="module">
@@ -127,8 +127,8 @@
     let geoWatchId = null;
 
     // Schedules (exemplo)
-    const schedules = [
-      { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+    const schedule = [
+  { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
   { time: "07:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
   { time: "08:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
   { time: "09:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
