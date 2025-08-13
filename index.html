@@ -66,12 +66,12 @@
     </section>
 
     <section class="panel">
-      <h3 style="margin:6px 0 10px">Horários previstos</h3>
-      <div class="muted"></div>
+      <h3 style="margin:6px 0 10px">Horários previstos (exemplo)</h3>
+      <div class="muted">Edite no código conforme a sua faculdade.</div>
       <ul id="schedule"></ul>
     </section>
 
-    <div class="footer">Feito por pedro gostoso</div>
+    <div class="footer">Feito como MVP educativo. Sem garantia. Use com responsabilidade.</div>
   </div>
 
   <script type="module">
@@ -127,25 +127,11 @@
     let geoWatchId = null;
 
     // Schedules (exemplo)
-    const schedule = [
-  { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "07:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "08:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "09:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "10:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "11:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "12:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "13:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "14:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "15:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "16:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "17:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "18:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "19:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "20:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)", note: "1 volta apenas" },
-  { time: "21:30", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "22:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" }
-];
+    const schedules = [
+      { rota: 'intercampi', saida: '07:30', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '12:00', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '17:30', origem: 'Campus B', destino: 'Campus A' },
+    ];
     const scheduleUL = document.getElementById('schedule');
     function renderSchedule(){
       scheduleUL.innerHTML = schedules
