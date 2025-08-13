@@ -40,10 +40,10 @@
     <header>
       <h1>OURBUS • Mapa colaborativo</h1>
       <div class="right">
-        <select id="route">
-          <option value="intercampi">Linha intercampi</option>
-          <option value="campus-a-b">Campus A ⇄ B</option>
-        </select>
+        <select id="routeSelect">
+  <option value="Interno">Interno (dentro da sede)</option>
+  <option value="Intercampi">Intercampi (Sede ↔ CI/CTDR)</option>
+</select>
         <button id="signinBtn" class="primary">Entrar (anônimo)</button>
         <button id="shareBtn">Estou no ônibus</button>
         <button id="waitBtn" class="danger">Espera eu!</button>
@@ -114,7 +114,7 @@ const firebaseConfig = {
 
     // Map init (Leaflet + OpenStreetMap)
     const map = L.map('map');
-    const defaultPos = [-3.7366, -38.5426]; // Fortaleza/CE - ajuste se quiser
+    const defaultPos = { lat: -7.1377, lng: -34.8450 }; //UFPB
     map.setView(defaultPos, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
@@ -127,12 +127,27 @@ const firebaseConfig = {
     let sharing = false;
     let geoWatchId = null;
 
-    // Schedules (exemplo)
+    // HORARIOS
     const schedules = [
-      { rota: 'intercampi', saida: '07:30', origem: 'Campus A', destino: 'Campus B' },
-      { rota: 'intercampi', saida: '12:00', origem: 'Campus A', destino: 'Campus B' },
-      { rota: 'intercampi', saida: '17:30', origem: 'Campus B', destino: 'Campus A' },
-    ];
+  { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "07:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "08:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "09:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "10:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "11:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "12:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "13:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "14:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "15:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "16:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "17:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "18:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "19:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "20:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)", note: "1 volta apenas" },
+  { time: "21:30", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "22:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" }
+];
+
     const scheduleUL = document.getElementById('schedule');
     function renderSchedule(){
       scheduleUL.innerHTML = schedules
@@ -240,11 +255,6 @@ const firebaseConfig = {
           .addTo(waitLayer);
       });
     });
-
-    // Dica de regras Firestore (cole em Regras de segurança):
-    /*
-    
-    */
   </script>
 </body>
 </html>
