@@ -40,10 +40,10 @@
     <header>
       <h1>OURBUS • Mapa colaborativo</h1>
       <div class="right">
-        <select id="routeSelect">
-  <option value="Interno">Interno (dentro da sede)</option>
-  <option value="Intercampi">Intercampi (Sede ↔ CI/CTDR)</option>
-</select>
+        <select id="route">
+          <option value="intercampi">Linha intercampi</option>
+          <option value="campus-a-b">Campus A ⇄ B</option>
+        </select>
         <button id="signinBtn" class="primary">Entrar (anônimo)</button>
         <button id="shareBtn">Estou no ônibus</button>
         <button id="waitBtn" class="danger">Espera eu!</button>
@@ -74,7 +74,12 @@
   </div>
 
   <script type="module">
-const firebaseConfig = {
+    // ====== CONFIGURE O FIREBASE AQUI ======
+    // 1) Crie um projeto em https://console.firebase.google.com
+    // 2) Habilite Authentication > Sign-in method > Anonymous
+    // 3) Habilite Firestore (em modo bloqueado) e cole sua config abaixo
+    // 4) Publique regras sugeridas no comentário mais abaixo
+    const firebaseConfig = {
 
   apiKey: "AIzaSyDh1wQX2Mu-AdJ841kMS6t1tq1qhI90yfA",
 
@@ -91,8 +96,6 @@ const firebaseConfig = {
   measurementId: "G-V2MTHGSY45"
 
 };
-
-
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
@@ -114,7 +117,7 @@ const firebaseConfig = {
 
     // Map init (Leaflet + OpenStreetMap)
     const map = L.map('map');
-    const defaultPos = { lat: -7.1377, lng: -34.8450 }; //UFPB
+    const defaultPos = [-3.7366, -38.5426]; // Fortaleza/CE - ajuste se quiser
     map.setView(defaultPos, 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
@@ -127,27 +130,12 @@ const firebaseConfig = {
     let sharing = false;
     let geoWatchId = null;
 
-    // HORARIOS
+    // Schedules (exemplo)
     const schedules = [
-  { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "07:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "08:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "09:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "10:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "11:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "12:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "13:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "14:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "15:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "16:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "17:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
-  { time: "18:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "19:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
-  { time: "20:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)", note: "1 volta apenas" },
-  { time: "21:30", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
-  { time: "22:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" }
-];
-
+      { rota: 'intercampi', saida: '07:30', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '12:00', origem: 'Campus A', destino: 'Campus B' },
+      { rota: 'intercampi', saida: '17:30', origem: 'Campus B', destino: 'Campus A' },
+    ];
     const scheduleUL = document.getElementById('schedule');
     function renderSchedule(){
       scheduleUL.innerHTML = schedules
@@ -255,6 +243,26 @@ const firebaseConfig = {
           .addTo(waitLayer);
       });
     });
+
+    // Dica de regras Firestore (cole em Regras de segurança):
+    /*
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        function isAuthed() { return request.auth != null; }
+        match /bus_pings/{doc} {
+          allow read: if true; // mapa público
+          allow create: if isAuthed() && request.resource.data.userId == request.auth.uid;
+          allow update, delete: if isAuthed() && resource.data.userId == request.auth.uid;
+        }
+        match /wait_requests/{doc} {
+          allow read: if true;
+          allow create: if isAuthed() && request.resource.data.userId == request.auth.uid;
+          allow delete: if isAuthed() && resource.data.userId == request.auth.uid;
+        }
+      }
+    }
+    */
   </script>
 </body>
 </html>
