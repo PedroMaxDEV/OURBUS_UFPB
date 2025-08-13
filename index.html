@@ -60,7 +60,7 @@
         <span class="badge">Rota: <span id="routeLabel">intercampi</span></span>
       </div>
       <div class="legend">
-        <div class="dot blue"></div><span class="muted">Pessoas no ônibus (vivo, últimos 90s)</span>
+        <div class="dot blue"></div><span class="muted">Pessoas no ônibus (online, últimos 90s)</span>
         <div class="dot orange"></div><span class="muted">Pedidos "Espera eu!" (últimos 5 min)</span>
       </div>
     </section>
@@ -75,11 +75,6 @@
   </div>
 
   <script type="module">
-    // ====== CONFIGURE O FIREBASE AQUI ======
-    // 1) Crie um projeto em https://console.firebase.google.com
-    // 2) Habilite Authentication > Sign-in method > Anonymous
-    // 3) Habilite Firestore (em modo bloqueado) e cole sua config abaixo
-    // 4) Publique regras sugeridas no comentário mais abaixo
     const firebaseConfig = {
 
   apiKey: "AIzaSyDh1wQX2Mu-AdJ841kMS6t1tq1qhI90yfA",
@@ -133,10 +128,24 @@
 
     // Schedules (exemplo)
     const schedules = [
-      { rota: 'intercampi', saida: '07:30', origem: 'Campus A', destino: 'Campus B' },
-      { rota: 'intercampi', saida: '12:00', origem: 'Campus A', destino: 'Campus B' },
-      { rota: 'intercampi', saida: '17:30', origem: 'Campus B', destino: 'Campus A' },
-    ];
+      { time: "06:40", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "07:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "08:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "09:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "10:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "11:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "12:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "13:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "14:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "15:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "16:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "17:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)" },
+  { time: "18:20", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "19:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" },
+  { time: "20:20", route: "Interno", origin: "CCHLA (Sede)", destination: "CCHLA (Sede)", note: "1 volta apenas" },
+  { time: "21:30", route: "Intercampi", origin: "CCHLA (Sede)", destination: "CI/CTDR" },
+  { time: "22:00", route: "Intercampi", origin: "CI/CTDR", destination: "CCHLA (Sede)", note: "Apenas 1 volta" }
+];
     const scheduleUL = document.getElementById('schedule');
     function renderSchedule(){
       scheduleUL.innerHTML = schedules
