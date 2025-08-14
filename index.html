@@ -2,109 +2,120 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>OURBUS — Nosso Ônibus</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#ff9020"/>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OurBus</title>
   <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
+  <!-- Firebase v10 (modular CDN) -->
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+  <script type="module" crossorigin src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+
   <style>
+    /* Paleta baseada nos mockups: laranja topo, azul escuro base, cinza claro como fundo */
     :root{
-      --bg:#f6f7fb; --accent:#ff9020; --nav:#0b4c7b; --card:#ffffff; --muted:#6b7280; --text:#0f172a;
+      --orange:#ff9020; /* topo, botões principais */
+      --blue:#0b4c7b;   /* barras e rodapé */
+      --bg:#e9ecef;     /* fundo neutro da página */
+      --card-bg:#ffffff; /* cartões e mapa */
+      --text:#0f172a;
+      --muted:#64748b;
+      --success:#2dd4bf;
+      --danger:#ff9020;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Roboto,Arial;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
-    .app{max-width:980px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-    .topbar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:linear-gradient(90deg,var(--accent),#ffb36b);color:#fff;border-bottom-left-radius:14px;border-bottom-right-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
-    .brand{font-weight:800;font-size:18px;letter-spacing:.6px}
-    .btn{background:#fff;color:var(--nav);border-radius:10px;padding:8px 12px;font-weight:700;border:0;cursor:pointer}
-    .content{display:flex;flex:1;gap:14px;padding:16px}
-    .sidebar{width:260px;background:var(--card);border-radius:12px;padding:12px;box-shadow:0 6px 24px rgba(15,23,42,.06);display:flex;flex-direction:column;gap:10px}
-    .main{flex:1;display:flex;flex-direction:column;gap:12px}
-    .map-card{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,.08)}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 16px 16px}
+
+    /* Top bar */
+    .topbar{position:sticky;top:0;z-index:1000;background:var(--orange);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+    .topbar-inner{display:flex;align-items:center;gap:12px;padding:12px 16px}
+    .burger{width:28px;height:2px;background:#fff;position:relative;border-radius:2px}
+    .burger::before,.burger::after{content:"";position:absolute;left:0;right:0;height:2px;background:#fff;border-radius:2px}
+    .burger::before{top:-8px}.burger::after{top:8px}
+    .brand{font-weight:800;font-size:22px;letter-spacing:.3px}
+
+    /* Card do mapa seguindo seu layout */
+    .map-card{background:var(--card-bg);margin:18px auto;border-radius:22px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.18);max-width:900px}
     #map{height:64vh;min-height:420px;width:100%}
-    .map-actions{display:flex;gap:8px;padding:10px;align-items:center;justify-content:space-between}
-    .pill{border-radius:999px;padding:10px 14px;border:0;cursor:pointer;font-weight:800}
-    .pill.primary{background:var(--accent);color:#fff}
-    .pill.ghost{background:#fff;color:var(--nav);border:1px solid #e6e9ef}
-    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(2,6,23,.06)}
-    .muted{color:var(--muted);font-size:14px}
-    .legend{display:flex;gap:12px;align-items:center}
-    .legend .dot{width:12px;height:12px;border-radius:50%}
-    .dot-bus{background:var(--accent)} .dot-wait{background:#111}
-    @media (max-width:920px){ .content{padding:12px} .sidebar{display:none} #map{height:66vh} }
+
+    /* Barra inferior estilo mockup */
+    .bottombar{background:var(--blue);padding:14px;display:flex;gap:16px;justify-content:center;align-items:center;border-radius:0 0 22px 22px}
+    .pill-btn{background:#000;color:#fff;border:0;padding:12px 22px;border-radius:999px;font-weight:700;cursor:pointer}
+
+    /* Botões de ação flutuantes (mobile-first) */
+    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px auto;max-width:900px}
+    .btn{border:0;border-radius:16px;padding:10px 14px;background:var(--orange);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 16px rgba(0,0,0,.12)}
+    .btn.secondary{background:#111}
+    .btn.ghost{background:#fff;color:#111;border:2px solid #111}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Painel info */
+    .panel{background:#fff;border-radius:16px;padding:12px 16px;max-width:900px;margin:0 auto 10px;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .badge{background:#f1f5f9;color:#0f172a;padding:6px 10px;border-radius:999px;font-size:12px}
+
+    /* Avatar marker (foto do usuário no mapa) */
+    .avatar-marker{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.25);background:#cbd5e1;overflow:hidden}
+    .avatar-marker img{width:100%;height:100%;object-fit:cover}
+
+    /* Ícone do ônibus como DivIcon com animação leve */
+    .bus-marker{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:#fff;border:3px solid var(--orange);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+    .bus-marker svg{width:24px;height:24px}
+
+    /* Popup visual */
+    .popup h4{margin:.2rem 0}
+
+    @media (max-width:640px){
+      #map{min-height:360px}
+    }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div class="brand">OURBUS</div>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="burger" aria-hidden="true"></div>
+      <div class="brand">OurBus</div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <button id="signBtn" class="btn">Entrar</button>
-        <img id="avatarTop" alt="avatar" style="display:none;width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.6)" />
-      </div>
-    </div>
-
-    <div class="content">
-      <aside class="sidebar">
-        <div style="font-weight:800">Menu</div>
-        <div class="card">
-          <div style="font-weight:700">Horários</div>
-          <ul id="scheduleList" style="padding-left:16px;margin:6px 0 0;color:var(--muted)"></ul>
-        </div>
-      </aside>
-
-      <div class="main">
-        <div class="map-card">
-          <div id="map"></div>
-          <div class="map-actions">
-            <div style="display:flex;gap:8px;align-items:center">
-              <select id="route" class="pill ghost">
-                <option value="Interno">Interno (dentro da sede)</option>
-                <option value="Intercampi">Intercampi (Sede ↔ CI/CTDR)</option>
-              </select>
-              <button id="shareBtn" class="pill primary">Estou no ônibus</button>
-              <button id="waitBtn" class="pill ghost">ESTOU CHEGANDO</button>
-            </div>
-            <div class="legend">
-              <div class="dot dot-bus"></div><div class="muted">Ônibus</div>
-              <div class="dot dot-wait"></div><div class="muted">Pedidos</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:800">Status: <span id="status">offline</span></div>
-            <div class="muted">Usuário: <span id="uid">-</span></div>
-            <div class="muted" id="modeInfo">Modo: Demo local</div>
-          </div>
-          <div>
-            <button id="clearTrail" class="pill ghost">Limpar trilha</button>
-          </div>
-        </div>
+        <img id="avatarTop" src="" alt="avatar" style="width:30px;height:30px;border-radius:50%;display:none;border:2px solid #fff"/>
+        <button id="googleBtn" class="btn secondary">Entrar com Google</button>
+        <button id="logoutBtn" class="btn ghost" style="display:none">Sair</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // Sininho simples
-    function playDing(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type='sine'; o.frequency.value=880; o.connect(g); g.connect(ctx.destination); g.gain.value=0; o.start(); g.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.01); o.frequency.linearRampToValueAtTime(1320, ctx.currentTime + 0.12); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5); setTimeout(()=>{ o.stop(); ctx.close(); }, 600);}catch(e){} }
-  </script>
+  <main class="wrap">
+    <section class="map-card">
+      <div id="map"></div>
+      <div class="bottombar">
+        <button id="waitBtn" class="pill-btn">ESTOU CHEGANDO!</button>
+      </div>
+    </section>
+
+    <div class="actions">
+      <select id="route" class="btn ghost">
+        <option value="Interno">Interno (dentro da sede)</option>
+        <option value="Intercampi">Intercampi (Sede ↔ CI/CTDR)</option>
+      </select>
+      <button id="shareBtn" class="btn">Estou no ônibus</button>
+      <button id="clearTrailBtn" class="btn secondary">Limpar trilha</button>
+    </div>
+
+    <section class="panel">
+      <div class="row">
+        <span class="badge">Status: <span id="status">offline</span></span>
+        <span class="badge">Usuário: <span id="uid">-</span></span>
+        <span class="badge">Rota: <span id="routeLabel">Interno</span></span>
+      </div>
+    </section>
+  </main>
+
+  <audio id="ding" preload="auto"></audio>
 
   <script type="module">
-    // =======================
-    // CONFIGURAÇÃO / MODOS
-    // =======================
-    // Modo demo funciona sem Firebase (simula um ônibus e pedidos locais)
-    const USE_FIREBASE = true; // mude para true quando preencher firebaseConfig
-
-    // Se for usar Firebase, preencha:
+    // ====== CONFIG FIREBASE – troque pelo seu (corrigindo storageBucket *.appspot.com) ======
     const firebaseConfig = {
       apiKey: "AIzaSyDh1wQX2Mu-AdJ841kMS6t1tq1qhI90yfA",
       authDomain: "ourbus-a9ef4.firebaseapp.com",
@@ -115,196 +126,224 @@
       measurementId: "G-V2MTHGSY45"
     };
 
-    // =======================
-    // UI REFS
-    // =======================
-    const signBtn = document.getElementById('signBtn');
-    const avatarTop = document.getElementById('avatarTop');
-    const statusEl = document.getElementById('status');
-    const uidEl = document.getElementById('uid');
-    const modeInfo = document.getElementById('modeInfo');
-    const routeSel = document.getElementById('route');
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, addDoc, setDoc, doc, serverTimestamp, onSnapshot, query, orderBy, limit, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const appFB = initializeApp(firebaseConfig);
+    const auth = getAuth(appFB);
+    const db = getFirestore(appFB);
+
+    // ===== UI refs =====
+    const googleBtn = document.getElementById('googleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
     const shareBtn = document.getElementById('shareBtn');
     const waitBtn = document.getElementById('waitBtn');
-    const scheduleList = document.getElementById('scheduleList');
-    const clearTrailBtn = document.getElementById('clearTrail');
+    const clearTrailBtn = document.getElementById('clearTrailBtn');
+    const statusEl = document.getElementById('status');
+    const uidEl = document.getElementById('uid');
+    const routeSel = document.getElementById('route');
+    const routeLabel = document.getElementById('routeLabel');
+    const avatarTop = document.getElementById('avatarTop');
+    const dingEl = document.getElementById('ding');
 
-    // =======================
-    // MAPA
-    // =======================
-    const map = L.map('map', { zoomControl:true, preferCanvas:true });
-    const defaultPos = { lat: -7.135742, lng: -34.845412 }; // UFPB — Sede João Pessoa
+    // pequeno beep (gerado por dataURI) estilo notificação
+    dingEl.src = 'data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA...'; // base64 encurtado propositalmente
+
+    // ===== MAPA =====
+    const map = L.map('map');
+    const defaultPos = { lat: -7.135742, lng: -34.845412 }; // UFPB - Sede João Pessoa
     map.setView(defaultPos, 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 20, attribution: '&copy; OpenStreetMap' }).addTo(map);
 
-    const busLayer = L.layerGroup().addTo(map);
-    const waitLayer = L.layerGroup().addTo(map);
-    const trailLayer = L.layerGroup().addTo(map);
-    let busPolyline = L.polyline([], { color: '#0ea5e9', weight: 5, opacity: 0.95 }).addTo(trailLayer);
-    let busMarker = null;
+    // Layers
+    const layerBusTrail = L.polyline([], { color: '#0ea5e9', weight: 4, opacity: .9 }).addTo(map); // trilha do ônibus
+    let busMarker = null; // marcador do ônibus (centro dos pings)
+    const layerPeople = L.layerGroup().addTo(map); // pessoas no ônibus (pings individuais opcionais)
+    const layerWaits = L.layerGroup().addTo(map); // "Espera eu!"
 
-    function busIcon(){
-      const svg = encodeURIComponent(`<svg viewBox="0 0 24 24" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="11" rx="2" stroke="${encodeURIComponent('#ff9020')}" stroke-width="1.6" fill="#fff"/><circle cx="7" cy="18" r="1.4" fill="${encodeURIComponent('#111')}"/><circle cx="17" cy="18" r="1.4" fill="${encodeURIComponent('#111')}"/></svg>`);
-      const html = `<div style="width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#f8fafc);border:3px solid #ff9020;box-shadow:0 6px 18px rgba(0,0,0,.18)"><img src="data:image/svg+xml;utf8,${svg}" style="width:26px;height:26px" /></div>`;
-      return L.divIcon({ html, className:'', iconSize:[46,46], iconAnchor:[23,23] });
-    }
-    function avatarIcon(url, size=44){
-      const html = `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,.18)">${url?`<img src="${url}" alt="avatar" style="width:100%;height:100%;object-fit:cover"/>`:''}</div>`;
-      return L.divIcon({ html, className:'', iconSize:[size,size], iconAnchor:[size/2,size/2] });
-    }
+    // State
+    let currentUser = null;
+    let sharing = false;   // compartilhando como ônibus
+    let shareWatchId = null;
+    let waitActive = false; // modo Espera Eu ativo para este usuário
+    let waitWatchId = null;
 
-    // =======================
-    // HORÁRIOS
-    // =======================
-    const schedules = [
-      { route: 'Interno', time: '06:40', note:'DUAS VOLTAS APENAS DENTRO DA SEDE' },
-      { route: 'Intercampi', time: '07:20', note:'SEDE → CI/CTDR' },
-      { route: 'Intercampi', time: '08:00', note:'CI/CTDR → SEDE (UMA VOLTA)' },
-      { route: 'Interno', time: '09:20', note:'DUAS VOLTAS' },
-      { route: 'Interno', time: '10:20', note:'DUAS VOLTAS' },
-      { route: 'Interno', time: '11:20', note:'DUAS VOLTAS' },
-      { route: 'Intercampi', time: '12:20', note:'SEDE → CI/CTDR' },
-      { route: 'Intercampi', time: '13:00', note:'CI/CTDR → SEDE (UMA VOLTA)' },
-      { route: 'Interno', time: '14:20', note:'DUAS VOLTAS' },
-      { route: 'Interno', time: '15:20', note:'DUAS VOLTAS' },
-      { route: 'Interno', time: '16:20', note:'DUAS VOLTAS' },
-      { route: 'Interno', time: '17:20', note:'DUAS VOLTAS' },
-      { route: 'Intercampi', time: '18:20', note:'SEDE → CI/CTDR' },
-      { route: 'Intercampi', time: '19:00', note:'CI/CTDR → SEDE (UMA VOLTA)' },
-      { route: 'Interno', time: '20:20', note:'UMA VOLTA' },
-      { route: 'Intercampi', time: '21:30', note:'SEDE → CI/CTDR' },
-      { route: 'Intercampi', time: '22:00', note:'CI/CTDR → SEDE (UMA VOLTA)' }
-    ];
-    function renderScheduleUI(){
-      scheduleList.innerHTML = schedules.filter(s=>s.route===routeSel.value).map(s=>`<li>${s.time} — ${s.note}</li>`).join('');
-    }
-    renderScheduleUI();
-    routeSel.addEventListener('change', renderScheduleUI);
+    // ===== AUTH Google =====
+    const provider = new GoogleAuthProvider();
+    googleBtn.addEventListener('click', async()=>{
+      try { await signInWithPopup(auth, provider); } catch(e){ alert('Falha ao entrar: '+e.message); }
+    });
+    logoutBtn.addEventListener('click', ()=> signOut(auth));
 
-    // =======================
-    // AUTH/USUÁRIO
-    // =======================
-    let currentUser = null; // { uid, name, photoURL }
+    onAuthStateChanged(auth, (user)=>{
+      currentUser = user;
+      statusEl.textContent = user? 'online' : 'offline';
+      uidEl.textContent = user? (user.displayName || user.email || user.uid.slice(0,6)+'…') : '-';
+      googleBtn.style.display = user? 'none':'inline-flex';
+      logoutBtn.style.display = user? 'inline-flex':'none';
+      avatarTop.style.display = user && user.photoURL? 'inline-block':'none';
+      if (user && user.photoURL) avatarTop.src = user.photoURL;
+      shareBtn.disabled = !user;
+      waitBtn.disabled = !user;
+    });
 
-    async function demoSign(){
-      currentUser = { uid: 'demo-'+Math.random().toString(36).slice(2,8), name: 'Usuário Demo', photoURL: '' };
-      statusEl.textContent = 'online';
-      uidEl.textContent = currentUser.name;
-      avatarTop.style.display = 'none';
+    // ===== Helpers =====
+    const nowMs = ()=>Date.now();
+    const SECS = n=>n*1000;
+    const haversine = (a,b)=>{ // metros
+      const R=6371000; const toRad=x=>x*Math.PI/180;
+      const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+      const la1=toRad(a.lat), la2=toRad(b.lat);
+      const h=Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+      return 2*R*Math.asin(Math.sqrt(h));
     }
 
-    if(!USE_FIREBASE){
-      modeInfo.textContent = 'Modo: Demo local (sem Firebase)';
-      signBtn.textContent = 'Entrar (demo)';
-      signBtn.addEventListener('click', demoSign);
-    } else {
-      modeInfo.textContent = 'Modo: Online (Firebase)';
-      // Carrega Firebase modular dinamicamente
-      const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }, { getFirestore, collection, addDoc, setDoc, doc, serverTimestamp, onSnapshot, query, orderBy, limit, deleteDoc }] = await Promise.all([
-        import('https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js'),
-        import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js'),
-        import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js')
-      ]);
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-      const provider = new GoogleAuthProvider();
+    const busDivIcon = ()=> L.divIcon({
+      className:'',
+      html:`<div class="bus-marker" title="Ônibus colaborativo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 16V7.5C5 5.567 6.567 4 8.5 4h7C17.433 4 19 5.567 19 7.5V16m-14 0h14m-14 0v1.5A1.5 1.5 0 006.5 19h11a1.5 1.5 0 001.5-1.5V16M7 12h3m4 0h3M8 19v1m8-1v1" stroke="#ff9020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>`,
+      iconSize:[46,46], iconAnchor:[23,23]
+    });
 
-      signBtn.addEventListener('click', async ()=>{
-        try{ await signInWithPopup(auth, provider); }catch(e){ alert('Erro login: '+e.message); }
-      });
-      onAuthStateChanged(auth, user=>{
-        currentUser = user ? { uid:user.uid, name:user.displayName||user.email||'Usuário', photoURL:user.photoURL||'' } : null;
-        statusEl.textContent = user ? 'online' : 'offline';
-        uidEl.textContent = user ? (currentUser.name) : '-';
-        if(user && user.photoURL){ avatarTop.src=user.photoURL; avatarTop.style.display='inline-block'; signBtn.style.display='none'; } else { avatarTop.style.display='none'; signBtn.style.display='inline-flex'; }
-      });
+    const avatarIcon = (url)=> L.divIcon({
+      className:'',
+      html:`<div class="avatar-marker">${url?`<img src="${url}"/>`:''}</div>`,
+      iconSize:[42,42], iconAnchor:[21,21]
+    });
 
-      // Firestore listeners
-      onSnapshot(query(collection(db,'bus_pings'), orderBy('ts','asc'), limit(1000)), snap=>{
-        const pts = [];
-        snap.docs.forEach(d=>{ const x=d.data(); if(x.route!==routeSel.value) return; pts.push([x.lat,x.lng]); });
-        busPolyline.setLatLngs(pts);
-        if(pts.length){
-          const last = pts[pts.length-1];
-          if(!busMarker) busMarker = L.marker(last, { icon: busIcon() }).addTo(busLayer); else busMarker.setLatLng(last);
-        } else { if(busMarker){ busLayer.removeLayer(busMarker); busMarker=null; } }
-      });
+    // ===== Compartilhar como ÔNIBUS (pings contínuos + trilha) =====
+    shareBtn.addEventListener('click', ()=>{
+      if (!currentUser) return alert('Entre com Google primeiro.');
+      sharing = !sharing;
+      shareBtn.textContent = sharing? 'Parar de compartilhar' : 'Estou no ônibus';
+      if (sharing) startShareBus(); else stopShareBus();
+    });
 
-      onSnapshot(query(collection(db,'wait_requests'), orderBy('ts','desc'), limit(200)), snap=>{
-        waitLayer.clearLayers();
-        const cutoff = Date.now() - 1000*60*15;
-        snap.docs.forEach(d=>{
-          const x=d.data(); if(x.route!==routeSel.value) return; const t=x.ts?.toMillis?.()??0; if(t < cutoff) return;
-          const m = L.marker([x.lat,x.lng], { icon: avatarIcon(x.photoURL||'', 44) }).bindPopup(`<b>${(x.name||'Aluno')}</b><br/>Pedido: Espera eu!`).addTo(waitLayer);
-          if(busPolyline.getLatLngs().length){ const bp = busPolyline.getLatLngs().slice(-1)[0]; L.polyline([[x.lat,x.lng],[bp.lat,bp.lng]], { color:'#111', weight:3, dashArray:'8 6', opacity:.8 }).addTo(waitLayer); }
-        });
-      });
+    function startShareBus(){
+      if (!('geolocation' in navigator)) { alert('Geolocalização não suportada'); return; }
+      shareWatchId = navigator.geolocation.watchPosition(async pos=>{
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        try{
+          await addDoc(collection(db,'bus_pings'),{
+            uid: currentUser.uid,
+            name: currentUser.displayName || null,
+            photoURL: currentUser.photoURL || null,
+            route: routeSel.value,
+            lat,lng,accuracy, ts: serverTimestamp()
+          });
+        }catch(e){ console.error(e); }
+      }, err=>console.warn(err), { enableHighAccuracy:true, maximumAge:3000, timeout:15000 });
+    }
+    function stopShareBus(){
+      if (shareWatchId!==null) navigator.geolocation.clearWatch(shareWatchId);
+      shareWatchId=null;
+    }
 
-      // Ações que escrevem
-      async function startSharingAsBus(){
-        if(!currentUser) return alert('Faça login antes.');
-        if(!('geolocation' in navigator)) return alert('Geolocalização não suportada');
-        navigator.geolocation.watchPosition(async pos=>{
-          const { latitude:lat, longitude:lng, accuracy } = pos.coords;
-          try{
-            const ref = collection(db,'bus_pings');
-            const { serverTimestamp, addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
-            await addDoc(ref, { uid: currentUser.uid, name: currentUser.name, photoURL: currentUser.photoURL||null, route: routeSel.value, lat, lng, accuracy, ts: serverTimestamp() });
-          }catch(e){ console.error(e); }
-        }, err=>console.warn(err), { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
+    routeSel.addEventListener('change', ()=>{ routeLabel.textContent = routeSel.value; });
+
+    // ===== Listener BUS: calcula centro e trilha a partir dos últimos pings =====
+    onSnapshot(query(collection(db,'bus_pings'), orderBy('ts','desc'), limit(300)), snap=>{
+      const cutoff = nowMs()-SECS(120);
+      const pts = [];
+      layerPeople.clearLayers();
+      snap.docs.forEach(d=>{
+        const x=d.data();
+        if (x.route!==routeSel.value) return;
+        const t = x.ts?.toMillis?.() ?? 0; if (t<cutoff) return;
+        pts.push([x.lat,x.lng]);
+        if (x.photoURL){
+          L.marker([x.lat,x.lng], { icon: avatarIcon(x.photoURL) })
+            .bindPopup(`<div class="popup"><h4>Passageiro no ônibus</h4>${x.name||'Aluno'}</div>`)
+            .addTo(layerPeople);
+        }
+      });
+      // trilha
+      layerBusTrail.setLatLngs(pts.reverse()); // ordem cronológica
+      // marcador central móvel (usa último ponto válido)
+      const last = pts.length? pts[pts.length-1] : null;
+      if (last){
+        if (!busMarker){ busMarker = L.marker(last, { icon: busDivIcon() }).addTo(map); }
+        busMarker.setLatLng(last);
       }
-      async function startWaitRequest(){
-        if(!currentUser) return alert('Faça login antes.');
-        if(!('geolocation' in navigator)) return alert('Geolocalização não suportada');
-        const { setDoc, doc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
+    });
+
+    // ===== ESPERA EU! (com rota dinâmica até o ônibus + foto/nome) =====
+    waitBtn.addEventListener('click', ()=>{
+      if (!currentUser) return alert('Entre com Google primeiro.');
+      waitActive = !waitActive;
+      waitBtn.textContent = waitActive? 'Cancelar pedido' : 'ESTOU CHEGANDO!';
+      if (waitActive) startWait(); else stopWait();
+    });
+
+    async function startWait(){
+      if (!('geolocation' in navigator)) { alert('Geolocalização não suportada'); return; }
+      // tocar aviso local também ao iniciar
+      try{ dingEl.currentTime=0; dingEl.play().catch(()=>{}); }catch{}
+      // acompanhar posição do solicitante em tempo real (documento por uid+rota)
+      const id = `${currentUser.uid}_${routeSel.value}`;
+      const ref = doc(db,'wait_requests', id);
+      waitWatchId = navigator.geolocation.watchPosition(async pos=>{
+        const { latitude:lat, longitude:lng, accuracy } = pos.coords;
+        try{
+          await setDoc(ref,{
+            uid: currentUser.uid,
+            name: currentUser.displayName || null,
+            photoURL: currentUser.photoURL || null,
+            route: routeSel.value,
+            lat,lng,accuracy, ts: serverTimestamp()
+          }, { merge:true });
+        }catch(e){ console.error(e); }
+      }, err=>console.warn(err), { enableHighAccuracy:true, maximumAge:2000, timeout:12000 });
+    }
+    async function stopWait(){
+      if (waitWatchId!==null) navigator.geolocation.clearWatch(waitWatchId);
+      waitWatchId=null; waitActive=false; waitBtn.textContent='ESTOU CHEGANDO!';
+      if (currentUser){
         const id = `${currentUser.uid}_${routeSel.value}`;
-        const ref = doc(db,'wait_requests', id);
-        navigator.geolocation.watchPosition(async pos=>{
-          const { latitude:lat, longitude:lng, accuracy } = pos.coords;
-          try{ await setDoc(ref, { uid: currentUser.uid, name: currentUser.name, photoURL: currentUser.photoURL||null, route: routeSel.value, lat, lng, accuracy, ts: serverTimestamp() }, { merge:true }); }catch(e){ console.error(e); }
-        }, err=>console.warn(err), { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
+        try{ await deleteDoc(doc(db,'wait_requests', id)); }catch{}
       }
-
-      // Liga botões (online)
-      shareBtn.addEventListener('click', startSharingAsBus);
-      waitBtn.addEventListener('click', startWaitRequest);
     }
 
-    // =======================
-    // MODO DEMO (sem Firebase)
-    // =======================
-    let demoTimer = null; let theta = 0; let demoWait = null;
-    function startDemoBus(){
-      if(demoTimer) return;
-      const center = defaultPos; const R = 0.01; // ~1km
-      demoTimer = setInterval(()=>{
-        theta += 0.04; const lat = center.lat + R*Math.sin(theta); const lng = center.lng + R*Math.cos(theta);
-        const pts = [...busPolyline.getLatLngs(), [lat,lng]]; if(pts.length>500) pts.shift(); busPolyline.setLatLngs(pts);
-        if(!busMarker) busMarker = L.marker([lat,lng], { icon: busIcon() }).addTo(busLayer); else busMarker.setLatLng([lat,lng]);
-      }, 400);
-    }
-    function stopDemoBus(){ if(demoTimer){ clearInterval(demoTimer); demoTimer=null; } }
+    // desenhar esperas e linha até o ônibus (desaparece quando se aproxima) + notificação sonora a todos
+    let waitsMap = new Map(); // id -> { marker, line }
+    onSnapshot(query(collection(db,'wait_requests'), orderBy('ts','desc'), limit(200)), (snap)=>{
+      const changes = snap.docChanges();
+      // som para novos pedidos
+      changes.forEach(ch=>{ if (ch.type==='added'){ try{ dingEl.currentTime=0; dingEl.play().catch(()=>{});}catch{} } });
 
-    function addDemoWait(){
-      if(demoWait){ demoWait.remove(); demoWait=null; }
-      const p = map.getCenter();
-      demoWait = L.marker([p.lat + (Math.random()-0.5)*0.006, p.lng + (Math.random()-0.5)*0.006], { icon: avatarIcon('', 44) })
-        .bindPopup('<b>Aluno Demo</b><br/>Pedido: Espera eu!').addTo(waitLayer);
-      playDing();
-    }
+      // redesenhar todos os atuais da rota
+      layerWaits.clearLayers(); waitsMap.clear();
+      const cutoff = nowMs()-SECS(600); // até 10 min visível
+      snap.docs.forEach(d=>{
+        const x=d.data(); const t=x.ts?.toMillis?.()??0; if (t<cutoff) return; if (x.route!==routeSel.value) return;
+        const id=d.id; const p={lat:x.lat,lng:x.lng};
+        // marker com avatar + nome
+        const m = L.marker([x.lat,x.lng], { icon: avatarIcon(x.photoURL) })
+          .bindPopup(`<div class="popup"><h4>${x.name||'Aluno'}</h4><div>Espera eu!</div></div>`) 
+          .addTo(layerWaits);
+        // desenha linha até o ônibus (último ponto)
+        const last = layerBusTrail.getLatLngs();
+        if (last && last.length){
+          const bus = last[last.length-1];
+          const line = L.polyline([p, bus], { color:'#111', weight:3, dashArray:'6 4' }).addTo(layerWaits);
+          // se aproxima do ônibus, remove
+          const dist = haversine(p,{lat:bus.lat,lng:bus.lng});
+          if (dist < 35){ // ~35m
+            // se for meu pedido, cancelo automático
+            if (currentUser && id.startsWith(currentUser.uid+"_")) stopWait();
+            else deleteDoc(doc(db,'wait_requests', id)).catch(()=>{});
+          }
+          waitsMap.set(id,{marker:m,line});
+        }
+      });
+    });
 
-    // Liga botões no modo demo
-    if(!USE_FIREBASE){
-      shareBtn.addEventListener('click', ()=>{ if(!currentUser) return alert('Clique em Entrar (demo) primeiro.'); startDemoBus(); });
-      waitBtn.addEventListener('click', ()=>{ if(!currentUser) return alert('Clique em Entrar (demo) primeiro.'); addDemoWait(); });
-    }
-
-    // Utilidades
-    clearTrailBtn.addEventListener('click', ()=>{ busPolyline.setLatLngs([]); });
-
-    // PWA SW
-    if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+    // Limpar trilha manualmente (apenas visual)
+    clearTrailBtn.addEventListener('click', ()=> layerBusTrail.setLatLngs([]));
   </script>
 </body>
 </html>
