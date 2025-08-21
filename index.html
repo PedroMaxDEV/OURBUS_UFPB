@@ -302,6 +302,18 @@ fullBtn.onclick=()=>{const r=document.documentElement;if(!document.fullscreenEle
     window.addEventListener('resize', () => { resize(); initParticles(); });
     resize(); initParticles(); animate();
 
+    // Botão de Referências
+const refsBtn = document.getElementById("refs-btn");
+const refsPanel = document.getElementById("refs-panel");
+
+refsBtn.addEventListener("click", () => {
+  if (refsPanel.style.display === "block") {
+    refsPanel.style.display = "none";
+  } else {
+    refsPanel.style.display = "block";
+  }
+});
+
 
 </script>
 </body>
