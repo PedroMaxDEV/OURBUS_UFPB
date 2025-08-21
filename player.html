@@ -20,6 +20,8 @@
     #question{font-size:clamp(18px,5.5vw,26px);text-align:center}
     #options{display:grid;gap:1rem;margin-top:1rem}
     .opt{padding:1rem;border:2px solid var(--border);border-radius:14px;text-align:center}
+    #bars div{margin:.5rem 0}
+    #ranking p{margin:.3rem 0}
     #error{display:none;margin-top:1rem;color:#fff;background:#c00;padding:1rem;border-radius:12px;font-size:clamp(12px,4vw,18px)}
   </style>
 </head>
@@ -40,6 +42,14 @@
         <h2 id="question">Aguardando pergunta…</h2>
         <div id="options"></div>
         <p id="feedback" style="text-align:center;margin-top:1rem"></p>
+        <div id="results" style="display:none;">
+          <h3 style="text-align:center">Resultado</h3>
+          <div id="bars"></div>
+        </div>
+        <div id="ranking" style="display:none;">
+          <h3 style="text-align:center">🏆 Ranking Final</h3>
+          <div id="rankList"></div>
+        </div>
         <div id="error"></div>
       </section>
     </main>
@@ -86,6 +96,7 @@
       currentQuestion=q;
       answered=false; elFb.textContent='';
       elQ.textContent=q.question; elOpts.innerHTML='';
+      document.getElementById('results').style.display='none';
       q.options.forEach((opt,i)=>{
         const b=document.createElement('button');
         b.className='opt'; b.textContent=opt;
@@ -99,9 +110,30 @@
       });
     });
 
+    onValue(ref(db,'results'), snap=>{
+      const data=snap.val(); if(!data||!currentQuestion) return;
+      const r = data[currentQuestion.index]; if(!r) return;
+      document.getElementById('results').style.display='block';
+      const bars=document.getElementById('bars');
+      bars.innerHTML = r.map(x=>`
+        <div>
+          <strong>${x.text}</strong> — ${x.pct}% ${x.correct?"✅":""}
+          <div style="background:#0f05;height:14px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <div style="background:var(--fg);width:${x.pct}%;height:100%"></div>
+          </div>
+        </div>
+      `).join('');
+    });
+
     onValue(ref(db,'gameOver'), snap=>{
       if(snap.val()){
-        elFb.textContent='Fim de jogo! Veja o ranking no HOST.';
+        elFb.textContent='Fim de jogo!';
+        document.getElementById('ranking').style.display='block';
+        onValue(ref(db,'scores'), sc=>{
+          const data=sc.val()||{};
+          const list=Object.entries(data).sort((a,b)=>b[1]-a[1]);
+          document.getElementById('rankList').innerHTML=list.map(([n,p])=>`<p>${n}: ${p}</p>`).join('');
+        });
       }
     });
   </script>

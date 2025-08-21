@@ -142,14 +142,8 @@
       if(!curr) return;
       if(ans.qIndex !== curr.index) return;
       if(ans.option === quizData[curr.index].a && ans.player){
-  const markRef = ref(db, 'answered/' + curr.index + '/' + ans.player);
-  const markSnap = await get(markRef);
-  if (!markSnap.exists()) {
-    await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
-    await set(markRef, true);
-  }
-}
-
+        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+      }
     });
 
     function updateBars(){
@@ -159,11 +153,17 @@
         const counts=Array(q.opts.length).fill(0);
         vals.forEach(a=>{ if(a.qIndex===currentIndex) counts[a.option]++; });
         const total = Math.max(1, counts.reduce((s,n)=>s+n,0));
-        elRes.innerHTML = counts.map((c,idx)=>{
+
+        const results = counts.map((c,idx)=>{
           const pct=((c/total)*100).toFixed(1);
-          const correct = idx===q.a;
-          return `<div class="bar"><span>${idx+1}) ${q.opts[idx]}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%${correct?" ✅":""}</span></div>`;
-        }).join('');
+          return { text: (idx+1)+") "+q.opts[idx], pct:parseFloat(pct), correct: idx===q.a };
+        });
+
+        set(ref(db,'results/'+currentIndex), results);
+
+        elRes.innerHTML = results.map(r=>
+          `<div class="bar"><span>${r.text}</span><div class="track"><div class="fill" style="width:${r.pct}%"></div></div><span>${r.pct}%${r.correct?" ✅":""}</span></div>`
+        ).join('');
       });
     }
 
