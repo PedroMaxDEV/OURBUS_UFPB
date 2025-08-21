@@ -99,153 +99,84 @@ footer{padding:1rem;text-align:center;opacity:.8;font-size:12px}
 </section>
 </main>
   
-  <style>
-   /* Conteúdo sobreposto */
-    .container {
-      position: relative;
-      z-index: 1;
-      padding: 2rem;
-    }
+<style>
+#refs-btn {
+  background-color: #0f0;
+  color: rgb(0, 0, 0);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: 0.3s;
+}
 
-
-/* Botão “Referências” no canto inferior esquerdo */
-    #refs-btn {
-      position: fixed;
-      bottom: 1rem;
-      left: 1rem;
-      background: transparent;
-      border: 2px solid #0f0;
-      color: #0f0;
-      padding: 0.5rem 1rem;
-      font-family: 'Press Start 2P', monospace;
-      cursor: pointer;
-      z-index: 10000;
-      transition: background 0.2s, color 0.2s;
-    }
-    #refs-btn:hover {
-      background: #0f0;
-      color: #000;
-    }
-
-
+#refs-btn:hover {
+  background-color: rgb(1, 107, 1);
+}
 
 /* Painel de referências */
-    #refs-panel {
-      position: fixed;
-      bottom: 3.5rem;
-      left: 1rem;
-      width: 260px;
-      max-height: 60vh;
-      overflow-y: auto;
-      background: rgba(0, 0, 0, 0.95);
-      border: 2px solid #0f0;
-      padding: 1rem;
-      font-size: 0.7rem;
-      font-family: 'Press Start 2P', monospace;
-      color: #0f0;
-      display: none;
-      z-index: 10000;
-    }
+#refs-panel {
+  display: none;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #0f0;
+  border-radius: 10px;
+  background-color: #000000;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+  max-width: 350px;
+}
 
-    #refs-panel h4 {
-      margin: 0 0 0.5rem;
-      font-size: 0.8rem;
-    }
+#refs-panel h4 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #ffffff;
+}
 
-    #refs-panel ul {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 1rem;
-    }
+#refs-panel ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
 
-    #refs-panel a {
-      color: #0f0;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+#refs-panel li {
+  margin: 6px 0;
+}
 
-    #refs-panel a:hover {
-      color: #fff;
-    }
-  </style>
+#refs-panel a {
+  color: #0f0;
+  text-decoration: none;
+  font-weight: 500;
+}
 
-<!-- Botão e painel de referências atualizado -->
-  <button id="refs-btn">Referências</button>
-  <div id="refs-panel">
-    <h4>Mini Jogo 8-bit</h4>
-    <ul>
-      <li>
-        <a href="" target="_blank">
-          
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/File_Transfer_Protocol" target="_blank">
-          FTP – Wikipédia
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/Kubernetes" target="_blank">
-          Kubernetes – Wikipédia
-        </a>
-      </li>
-      <li>
-        <a href="" target="_blank">
-          
-        </a>
-      </li>
-    </ul>
+#refs-panel a:hover {
+  text-decoration: underline;
+}
+</style>
 
-    <h4>Arquitetura Cloud & Profissão</h4>
-    <ul>
-      <li>
-        <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-145.pdf" target="_blank">
-          NIST SP 800-145: Definição de Cloud Computing
-        </a>
-      </li>
-      <li>
-        <a href="https://kubernetes.io/docs/concepts/architecture/" target="_blank">
-          Kubernetes Architecture – Documentação Oficial
-        </a>
-      </li>
-      <li>
-        <a href="" target="_blank">
-          
-        </a>
-      </li>
-    </ul>
+<button id="refs-btn">Referências</button>
+<div id="refs-panel" style="display: none;">
+  <h4>Mini Jogo 8-bit</h4>
+  <ul>
+    <li><a href="https://pt.wikipedia.org/wiki/File_Transfer_Protocol" target="_blank">FTP (Wikipedia)</a></li>
+    <li><a href="https://pt.wikipedia.org/wiki/Internet" target="_blank">Internet (Wikipedia)</a></li>
+    <li><a href="https://www.hostinger.com.br/tutoriais/o-que-e-http" target="_blank">O que é HTTP (Hostinger)</a></li>
+    <li><a href="https://aws.amazon.com/pt/what-is/dns/" target="_blank">O que é DNS (AWS)</a></li>
+    <li><a href="https://pt.wikipedia.org/wiki/HTML" target="_blank">HTML (Wikipedia)</a></li>
+    <li><a href="https://pt.wikipedia.org/wiki/Cascading_Style_Sheets" target="_blank">CSS (Wikipedia)</a></li>
+    <li><a href="https://pt.wikipedia.org/wiki/JavaScript" target="_blank">JavaScript (Wikipedia)</a></li>
+    <li><a href="https://pt.wikipedia.org/wiki/TCP/IP" target="_blank">TCP/IP (Wikipedia)</a></li>
+    <li><a href="https://www.cloudflare.com/pt-br/learning/ddos/glossary/domain-name-system-dns/" target="_blank">DNS (Cloudflare)</a></li>
+  </ul>
+</div>
 
-    <h4>Tópicos da Década de 90</h4>
-    <ul>
-      <li>
-        <a href="" target="_blank">
-          
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/HTML" target="_blank">
-          HTML – Wikipédia
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/Cascading_Style_Sheets" target="_blank">
-          CSS – Wikipédia
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/Adobe_Photoshop" target="_blank">
-          Photoshop – Wikipédia
-        </a>
-      </li>
-      <li>
-        <a href="https://pt.wikipedia.org/wiki/CD-ROM" target="_blank">
-          CD-ROM – Wikipédia
-        </a>
-      </li>
-    </ul>
-  </div>
-
-
+<script>
+  document.getElementById("refs-btn").addEventListener("click", () => {
+    const panel = document.getElementById("refs-panel");
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  });
+</script>
 
 <script>
 const slides=[
