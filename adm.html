@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Quiz 90s — HOST</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- QRCode lib (global) -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
@@ -38,8 +39,7 @@
       <div style="display:flex;gap:.6rem;flex-wrap:wrap">
         <a class="btn" href="index.html">⬅️ Voltar aos Slides</a>
         <button class="btn" id="btn-full">⛶ Tela inteira</button>
-        <button class="btn" id="next">▶️ Próxima pergunta</button>
-        <button class="btn" id="show">📊 Encerrar pergunta</button>
+        <button class="btn" id="next">Próxima pergunta</button>
       </div>
     </header>
 
@@ -59,7 +59,7 @@
       </aside>
     </main>
 
-    <footer><small>Resultados só aparecem após encerrar cada pergunta.</small></footer>
+    <footer><small>As barras mostram porcentagem por alternativa. A resposta correta fica em destaque.</small></footer>
   </div>
 
   <script type="module">
@@ -77,6 +77,7 @@
       apiKey: "AIzaSyDffGKwazMR-P2Bb6459T7IrT_gehEdjwo",
       authDomain: "works-63725.firebaseapp.com",
       projectId: "works-63725",
+      // ✅ Realtime Database precisa deste campo:
       databaseURL: "https://works-63725-default-rtdb.firebaseio.com",
       storageBucket: "works-63725.firebasestorage.app",
       messagingSenderId: "314958421674",
@@ -100,7 +101,6 @@
     ];
 
     let currentIndex = -1;
-    let showingResults = false;
     const elQ    = document.getElementById('question');
     const elOpts = document.getElementById('options');
     const elRes  = document.getElementById('results');
@@ -121,17 +121,9 @@
 
     async function loadQuestion(){
       try {
-        if(currentIndex+1 >= quizData.length){
-          await set(ref(db,'gameOver'),true);
-          elQ.textContent = "Fim do jogo! Veja o ranking.";
-          elOpts.innerHTML = '';
-          elRes.innerHTML = '';
-          return;
-        }
-        currentIndex++;
-        showingResults=false;
+        currentIndex = (currentIndex + 1) % quizData.length;
         const q = quizData[currentIndex];
-        await set(ref(db,'currentQuestion'),{question:q.q,options:q.opts,index:currentIndex,answer:q.a,show:false});
+        await set(ref(db,'currentQuestion'),{question:q.q,options:q.opts,index:currentIndex,answer:q.a});
         await remove(ref(db,'answers'));
         await set(ref(db,'gameOver'),false);
         renderQuestion();
@@ -140,22 +132,30 @@
       }
     }
 
-    async function showResults(){
-      showingResults = true;
-      await set(ref(db,'currentQuestion/show'),true);
-      updateBars();
-    }
-
     document.getElementById('next').onclick = loadQuestion;
-    document.getElementById('show').onclick = showResults;
     document.getElementById('btn-full').onclick = ()=>{
       const r=document.documentElement;
       if(!document.fullscreenElement){ r.requestFullscreen?.() } else { document.exitFullscreen?.() }
     };
 
-    // Atualiza barras (só quando mostrar resultados)
+    // Atualiza barras ao receber respostas
+    onChildAdded(ref(db,'answers'), async snap=>{
+      try {
+        const ans = snap.val();
+        const qSnap = await get(ref(db,'currentQuestion'));
+        const curr = qSnap.val();
+        if(!curr) return;
+        if(ans.qIndex !== curr.index) return;
+        if(ans.option === quizData[curr.index].a && ans.player){
+          await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+        }
+        updateBars();
+      } catch (err) {
+        showError("Erro processando resposta: " + err.message);
+      }
+    });
+
     function updateBars(){
-      if(!showingResults) return;
       get(ref(db,'answers')).then(snap=>{
         const data=snap.val()||{}; const vals=Object.values(data);
         const q=quizData[currentIndex];
@@ -177,27 +177,12 @@
       elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=4?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
     });
 
+    // QRCode dinâmico para o player
     const playerUrl = new URL('player.html', location.href).href;
     document.getElementById('game-link').textContent = playerUrl;
     if (window.QRCode && document.getElementById('qrcode')) {
       QRCode.toCanvas(document.getElementById('qrcode'), playerUrl, { width: 220 });
     }
-
-    onChildAdded(ref(db,'answers'), async snap=>{
-      try {
-        const ans = snap.val();
-        const qSnap = await get(ref(db,'currentQuestion'));
-        const curr = qSnap.val();
-        if(!curr) return;
-        if(ans.qIndex !== curr.index) return;
-        if(ans.option === quizData[curr.index].a && ans.player){
-          await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
-        }
-        updateBars();
-      } catch (err) {
-        showError("Erro processando resposta: " + err.message);
-      }
-    });
   </script>
 </body>
 </html>
