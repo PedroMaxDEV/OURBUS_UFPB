@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz 90s - Mestre</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body { background: #000; color: #0f0; font-family: 'Press Start 2P', monospace; text-align: center; }
+    button { margin: 1rem; padding: 1rem; border: 2px solid #0f0; background: transparent; color: #0f0; cursor: pointer; }
+    button:hover { background: #0f0; color: #000; }
+    #options li { list-style: none; margin: .5rem 0; }
+    #qrcode { margin: 1rem auto; }
+    .correct { color: #0f0; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Quiz 90s - Mestre</h1>
+  <div id="question"></div>
+  <ul id="options"></ul>
+  <button id="next">Próxima</button>
+  <h2>Resultado</h2>
+  <div id="result"></div>
+  <h2>Ranking</h2>
+  <div id="ranking"></div>
+  <h3>Entre no jogo!</h3>
+  <canvas id="qrcode"></canvas>
+  <p id="game-link"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      databaseURL: "https://SEU_PROJETO.firebaseio.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "000000000",
+      appId: "1:000000000:web:xxxxxx"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const quizData = [
+      { question: "Qual protocolo popularizou a Internet nos anos 90?", options: ["HTTP", "TCP/IP", "FTP"], answer: 1 },
+      { question: "Quem criou o primeiro navegador?", options: ["Bill Gates", "Tim Berners-Lee", "Steve Jobs"], answer: 1 },
+      { question: "Em que ano a Intel lançou o processador Pentium?", options: ["1993", "2000", "1989"], answer: 0 },
+      { question: "Qual software de imagem surgiu nos anos 90?", options: ["Photoshop 1.0", "Paint 3D", "Gimp 2020"], answer: 0 }
+    ];
+
+    let current = 0;
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const resultEl = document.getElementById("result");
+    const rankingEl = document.getElementById("ranking");
+
+    function loadQuestion() {
+      const q = quizData[current];
+      set(ref(db, "currentQuestion"), { question: q.question, options: q.options, index: current, answer: q.answer });
+      remove(ref(db, "answers"));
+      questionEl.textContent = q.question;
+      optionsEl.innerHTML = q.options.map((o,i)=>`<li>${i+1}) ${o}</li>`).join("");
+      resultEl.innerHTML = "";
+    }
+
+    document.getElementById("next").addEventListener("click", () => {
+      if (current < quizData.length) {
+        loadQuestion();
+        current++;
+      } else {
+        set(ref(db, "gameOver"), true);
+        showRanking();
+      }
+    });
+
+    onValue(ref(db, "answers"), snap => {
+      const data = snap.val();
+      if (!data) return;
+      const q = quizData[current-1];
+      const total = Object.keys(data).length;
+      let counts = Array(q.options.length).fill(0);
+      Object.values(data).forEach(a => counts[a.option]++);
+      resultEl.innerHTML = q.options.map((o,i)=>{
+        let percent = ((counts[i]/total)*100).toFixed(1) || 0;
+        let cls = (i===q.answer) ? "correct" : "";
+        return `<p class="${cls}">${i+1}) ${o} - ${percent}%</p>`;
+      }).join("");
+      Object.values(data).forEach(ans=>{
+        if(ans.option===q.answer){
+          update(ref(db,"scores/"+ans.player),p=>(p||0)+1);
+        }
+      });
+    });
+
+    function showRanking(){
+      onValue(ref(db, "scores"), snap => {
+        rankingEl.innerHTML = "";
+        const data = snap.val() || {};
+        Object.entries(data).sort((a,b)=>b[1]-a[1]).forEach(([nome,pontos])=>{
+          let extra = pontos>=4 ? " 🏆 Você ganhou um ponto na matéria de Thais!" : "";
+          rankingEl.innerHTML += `<p>${nome}: ${pontos}${extra}</p>`;
+        });
+      },{onlyOnce:true});
+    }
+
+    const gameUrl = window.location.origin + "/player.html";
+    document.getElementById("game-link").textContent = gameUrl;
+    QRCode.toCanvas(document.getElementById("qrcode"), gameUrl, { width: 180 });
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz 90s - Jogador</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body { background: #000; color: #0f0; font-family: 'Press Start 2P', monospace; text-align: center; }
+    input, button { margin: .5rem; padding: 1rem; border: 2px solid #0f0; background: transparent; color: #0f0; }
+    button:hover { background: #0f0; color: #000; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Quiz 90s</h1>
+  <div id="login">
+    <p>Digite seu nome:</p>
+    <input id="playerName" />
+    <button id="enter">Entrar</button>
+  </div>
+  <div id="game" style="display:none;">
+    <h2 id="question">Aguardando pergunta...</h2>
+    <div id="options"></div>
+    <p id="feedback"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      databaseURL: "https://SEU_PROJETO.firebaseio.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "000000000",
+      appId: "1:000000000:web:xxxxxx"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let playerName="", answered=false;
+    document.getElementById("enter").addEventListener("click", () => {
+      playerName=document.getElementById("playerName").value.trim();
+      if(!playerName) return;
+      document.getElementById("login").style.display="none";
+      document.getElementById("game").style.display="block";
+    });
+
+    onValue(ref(db,"currentQuestion"), snap=>{
+      const q=snap.val();
+      if(!q) return;
+      answered=false;
+      document.getElementById("question").textContent=q.question;
+      const optionsDiv=document.getElementById("options");
+      optionsDiv.innerHTML="";
+      q.options.forEach((opt,i)=>{
+        const btn=document.createElement("button");
+        btn.textContent=opt;
+        btn.addEventListener("click",()=>{
+          if(answered) return;
+          answered=true;
+          push(ref(db,"answers"),{player:playerName,option:i,qIndex:q.index});
+        });
+        optionsDiv.appendChild(btn);
+      });
+    });
+
+    onValue(ref(db,"gameOver"),snap=>{
+      if(snap.val()){
+        document.getElementById("feedback").textContent="Fim de jogo! Veja o ranking na tela do mestre!";
+      }
+    });
+  </script>
+</body>
+</html>
