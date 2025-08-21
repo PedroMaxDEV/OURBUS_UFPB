@@ -2,123 +2,114 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Quiz 90s - Mestre</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <title>Quiz 90s — HOST</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- QRCode lib -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    body { background: #000; color: #0f0; font-family: 'Press Start 2P', monospace; text-align: center; }
-    button { margin: 1rem; padding: 1rem; border: 2px solid #0f0; background: transparent; color: #0f0; cursor: pointer; }
-    button:hover { background: #0f0; color: #000; }
-    #options li { list-style: none; margin: .5rem 0; }
-    #qrcode { margin: 1rem auto; }
-    .correct { color: #0f0; font-weight: bold; }
-  </style>
+
+  <!-- Estilos omitidos aqui (mantém os que já tinha) -->
 </head>
 <body>
-  <h1>🎮 Quiz 90s - Mestre</h1>
-  <div id="question"></div>
-  <ul id="options"></ul>
-  <button id="next">Próxima</button>
-  <h2>Resultado</h2>
-  <div id="result"></div>
-  <h2>Ranking</h2>
-  <div id="ranking"></div>
-  <h3>Entre no jogo!</h3>
-  <canvas id="qrcode"></canvas>
-  <p id="game-link"></p>
+  <!-- ... seu HTML da tela ... -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, runTransaction, onChildAdded, get } 
+      from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
-   const firebaseConfig = {
-
-  apiKey: "AIzaSyDffGKwazMR-P2Bb6459T7IrT_gehEdjwo",
-
-  authDomain: "works-63725.firebaseapp.com",
-
-  projectId: "works-63725",
-
-  storageBucket: "works-63725.firebasestorage.app",
-
-  messagingSenderId: "314958421674",
-
-  appId: "1:314958421674:web:b5db4802ef3a0375d37ad3",
-
-  measurementId: "G-4V14Z21393"
-
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyDffGKwazMR-P2Bb6459T7IrT_gehEdjwo",
+      authDomain: "works-63725.firebaseapp.com",
+      projectId: "works-63725",
+      databaseURL: "https://works-63725-default-rtdb.firebaseio.com", <!-- esse campo é essencial -->
+      storageBucket: "works-63725.appspot.com",
+      messagingSenderId: "314958421674",
+      appId: "1:314958421674:web:b5db4802ef3a0375d37ad3",
+      measurementId: "G-4V14Z21393"
+    };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const db  = getDatabase(app);
 
     const quizData = [
-      { question: "Qual protocolo popularizou a Internet nos anos 90?", options: ["HTTP", "TCP/IP", "FTP"], answer: 1 },
-      { question: "Quem criou o primeiro navegador?", options: ["Bill Gates", "Tim Berners-Lee", "Steve Jobs"], answer: 1 },
-      { question: "Em que ano a Intel lançou o processador Pentium?", options: ["1993", "2000", "1989"], answer: 0 },
-      { question: "Qual software de imagem surgiu nos anos 90?", options: ["Photoshop 1.0", "Paint 3D", "Gimp 2020"], answer: 0 }
+      { q:"Qual protocolo popularizou a Internet nos anos 90?", opts:["HTTP","TCP/IP","FTP"], a:1 },
+      { q:"Quem criou o primeiro navegador?", opts:["Bill Gates","Tim Berners-Lee","Steve Jobs"], a:1 },
+      { q:"Em que ano a Intel lançou o Pentium?", opts:["1993","2000","1989"], a:0 },
+      { q:"Qual software de imagem surgiu nos anos 90?", opts:["Photoshop 1.0","Paint 3D","Gimp 2020"], a:0 }
     ];
 
-    let current = 0;
-    const questionEl = document.getElementById("question");
-    const optionsEl = document.getElementById("options");
-    const resultEl = document.getElementById("result");
-    const rankingEl = document.getElementById("ranking");
+    let currentIndex=-1;
+    const elQ=document.getElementById('question');
+    const elOpts=document.getElementById('options');
+    const elRes=document.getElementById('results');
+    const elRank=document.getElementById('ranking');
 
-    function loadQuestion() {
-      const q = quizData[current];
-      set(ref(db, "currentQuestion"), { question: q.question, options: q.options, index: current, answer: q.answer });
-      remove(ref(db, "answers"));
-      questionEl.textContent = q.question;
-      optionsEl.innerHTML = q.options.map((o,i)=>`<li>${i+1}) ${o}</li>`).join("");
-      resultEl.innerHTML = "";
-    }
-
-    document.getElementById("next").addEventListener("click", () => {
-      if (current < quizData.length) {
-        loadQuestion();
-        current++;
-      } else {
-        set(ref(db, "gameOver"), true);
-        showRanking();
-      }
-    });
-
-    onValue(ref(db, "answers"), snap => {
-      const data = snap.val();
-      if (!data) return;
-      const q = quizData[current-1];
-      const total = Object.keys(data).length;
-      let counts = Array(q.options.length).fill(0);
-      Object.values(data).forEach(a => counts[a.option]++);
-      resultEl.innerHTML = q.options.map((o,i)=>{
-        let percent = ((counts[i]/total)*100).toFixed(1) || 0;
-        let cls = (i===q.answer) ? "correct" : "";
-        return `<p class="${cls}">${i+1}) ${o} - ${percent}%</p>`;
-      }).join("");
-      Object.values(data).forEach(ans=>{
-        if(ans.option===q.answer){
-          update(ref(db,"scores/"+ans.player),p=>(p||0)+1);
-        }
+    function renderQuestion(){
+      const q=quizData[currentIndex];
+      elQ.textContent=q.q;
+      elOpts.innerHTML='';
+      q.opts.forEach((o,idx)=>{
+        const div=document.createElement('div');
+        div.className='opt';
+        div.textContent=`${idx+1}) ${o}`;
+        elOpts.appendChild(div);
       });
-    });
-
-    function showRanking(){
-      onValue(ref(db, "scores"), snap => {
-        rankingEl.innerHTML = "";
-        const data = snap.val() || {};
-        Object.entries(data).sort((a,b)=>b[1]-a[1]).forEach(([nome,pontos])=>{
-          let extra = pontos>=4 ? " 🏆 Você ganhou um ponto na matéria de Thais!" : "";
-          rankingEl.innerHTML += `<p>${nome}: ${pontos}${extra}</p>`;
-        });
-      },{onlyOnce:true});
+      elRes.innerHTML='';
     }
 
-    const gameUrl = "https://pedromaxdev.github.io/OURBUS_UFPB/player";
-    document.getElementById("game-link").textContent = gameUrl;
-    QRCode.toCanvas(document.getElementById("qrcode"), gameUrl, { width: 180 });
+    async function loadQuestion(){
+      currentIndex = (currentIndex+1) % quizData.length;
+      const q=quizData[currentIndex];
+      await set(ref(db,'currentQuestion'),{question:q.q,options:q.opts,index:currentIndex,answer:q.a});
+      await remove(ref(db,'answers'));
+      await set(ref(db,'gameOver'),false);
+      renderQuestion();
+    }
+
+    document.getElementById('next').onclick=loadQuestion;
+    document.getElementById('btn-full').onclick=()=>{
+      const r=document.documentElement;
+      if(!document.fullscreenElement){ r.requestFullscreen?.() } else { document.exitFullscreen?.() }
+    };
+
+    onChildAdded(ref(db,'answers'), async snap=>{
+      const ans=snap.val();
+      const qSnap=await get(ref(db,'currentQuestion'));
+      const curr=qSnap.val();
+      if(!curr) return;
+      if(ans.qIndex!==curr.index) return;
+      if(ans.option===quizData[curr.index].a && ans.player){
+        await runTransaction(ref(db,'scores/'+ans.player), val => (val||0)+1 );
+      }
+      updateBars();
+    });
+
+    function updateBars(){
+      get(ref(db,'answers')).then(snap=>{
+        const data=snap.val()||{}; 
+        const vals=Object.values(data);
+        const q=quizData[currentIndex];
+        const counts=Array(q.opts.length).fill(0);
+        vals.forEach(a=>{ if(a.qIndex===currentIndex) counts[a.option]++; });
+        const total = Math.max(1, counts.reduce((s,n)=>s+n,0));
+        elRes.innerHTML = counts.map((c,idx)=>{
+          const pct=((c/total)*100).toFixed(1);
+          const correct = idx===q.a;
+          return `<div class="bar"><span>${idx+1}) ${q.opts[idx]}</span><div class="track"><div class="fill" style="width:${pct}%"></div></div><span>${pct}%${correct?" ✅":""}</span></div>`;
+        }).join('');
+      });
+    }
+
+    onValue(ref(db,'scores'), snap=>{
+      const data=snap.val()||{};
+      const list=Object.entries(data).sort((a,b)=>b[1]-a[1]);
+      elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=4?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
+    });
+
+    const playerUrl = new URL('player.html', location.href).href;
+    document.getElementById('game-link').textContent = playerUrl;
+    QRCode.toCanvas(document.getElementById('qrcode'), playerUrl, { width: 220 });
   </script>
 </body>
 </html>
