@@ -142,7 +142,7 @@
       if(!curr) return;
       if(ans.qIndex !== curr.index) return;
       if(ans.option === quizData[curr.index].a && ans.player){
-        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0) );
       }
     });
 
@@ -170,7 +170,7 @@
     onValue(ref(db,'scores'), snap=>{
       const data=snap.val()||{};
       const list=Object.entries(data).sort((a,b)=>b[1]-a[1]);
-      elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=4?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
+      elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=8?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
     });
 
     const playerUrl = new URL('player.html', location.href).href;
