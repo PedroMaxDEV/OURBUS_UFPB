@@ -30,7 +30,44 @@ box-shadow:0 0 40px rgba(0,255,0,.12);}
 
 .nav{display:flex;gap:1rem;justify-content:center;margin-top:1rem}
 .nav .btn{font-size:clamp(14px,2vw,20px);padding:1rem 1.4rem}
+   
+#refs-panel {
+      position: fixed;
+      bottom: 3.5rem;
+      left: 1rem;
+      width: 260px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid #0f0;
+      padding: 1rem;
+      font-size: 0.7rem;
+      font-family: 'Press Start 2P', monospace;
+      color: #0f0;
+      display: none;
+      z-index: 10000;
+    }
 
+    #refs-panel h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    #refs-panel ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+    }
+
+    #refs-panel a {
+      color: #0f0;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #refs-panel a:hover {
+      color: #fff;
+    }
 
 footer{padding:1rem;text-align:center;opacity:.8;font-size:12px}
 </style>
@@ -42,9 +79,12 @@ footer{padding:1rem;text-align:center;opacity:.8;font-size:12px}
 <div style="display:flex;gap:.6rem;flex-wrap:wrap">
 <a class="btn" href="adm.html">🏁 HOST JOGO</a>
 <a class="btn" href="player.html">📱 Jogar no celular</a>
+<a class="btn" href="https://youtu.be/onIjvfWzN-0">Arquitetura em Cloud & Evolução da Profissão</a>
 <button class="btn" id="btn-full">⛶ Tela inteira</button>
 </div>
 </header>
+
+
 
 
 <main class="stage">
@@ -53,23 +93,166 @@ footer{padding:1rem;text-align:center;opacity:.8;font-size:12px}
 <p class="content" id="s-text"></p>
 <div class="media"><img id="s-img" alt="" loading="lazy"></div>
 <div class="nav">
-<button class="btn" id="prev">⬅️ Anterior</button>
-<button class="btn" id="next">Próximo ➡️</button>
+<button class="btn" id="prev">Anterior</button>
+<button class="btn" id="next">Próximo</button>
 </div>
 </section>
 </main>
+  
+  <style>
+   /* Conteúdo sobreposto */
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+    }
 
 
-<footer>Use as setas ou clique nos botões. Projete esta página: tudo escala com a tela.</footer>
-</div>
+/* Botão “Referências” no canto inferior esquerdo */
+    #refs-btn {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      background: transparent;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 0.5rem 1rem;
+      font-family: 'Press Start 2P', monospace;
+      cursor: pointer;
+      z-index: 10000;
+      transition: background 0.2s, color 0.2s;
+    }
+    #refs-btn:hover {
+      background: #0f0;
+      color: #000;
+    }
+
+
+
+/* Painel de referências */
+    #refs-panel {
+      position: fixed;
+      bottom: 3.5rem;
+      left: 1rem;
+      width: 260px;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid #0f0;
+      padding: 1rem;
+      font-size: 0.7rem;
+      font-family: 'Press Start 2P', monospace;
+      color: #0f0;
+      display: none;
+      z-index: 10000;
+    }
+
+    #refs-panel h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    #refs-panel ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+    }
+
+    #refs-panel a {
+      color: #0f0;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #refs-panel a:hover {
+      color: #fff;
+    }
+  </style>
+
+<!-- Botão e painel de referências atualizado -->
+  <button id="refs-btn">Referências</button>
+  <div id="refs-panel">
+    <h4>Mini Jogo 8-bit</h4>
+    <ul>
+      <li>
+        <a href="" target="_blank">
+          
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/File_Transfer_Protocol" target="_blank">
+          FTP – Wikipédia
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/Kubernetes" target="_blank">
+          Kubernetes – Wikipédia
+        </a>
+      </li>
+      <li>
+        <a href="" target="_blank">
+          
+        </a>
+      </li>
+    </ul>
+
+    <h4>Arquitetura Cloud & Profissão</h4>
+    <ul>
+      <li>
+        <a href="https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-145.pdf" target="_blank">
+          NIST SP 800-145: Definição de Cloud Computing
+        </a>
+      </li>
+      <li>
+        <a href="https://kubernetes.io/docs/concepts/architecture/" target="_blank">
+          Kubernetes Architecture – Documentação Oficial
+        </a>
+      </li>
+      <li>
+        <a href="" target="_blank">
+          
+        </a>
+      </li>
+    </ul>
+
+    <h4>Tópicos da Década de 90</h4>
+    <ul>
+      <li>
+        <a href="" target="_blank">
+          
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/HTML" target="_blank">
+          HTML – Wikipédia
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/Cascading_Style_Sheets" target="_blank">
+          CSS – Wikipédia
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/Adobe_Photoshop" target="_blank">
+          Photoshop – Wikipédia
+        </a>
+      </li>
+      <li>
+        <a href="https://pt.wikipedia.org/wiki/CD-ROM" target="_blank">
+          CD-ROM – Wikipédia
+        </a>
+      </li>
+    </ul>
+  </div>
+
 
 
 <script>
 const slides=[
-{t:"Expansão da Internet",x:"No início dos anos 90, a conexão dial‑up popularizou o acesso doméstico. ISPs locais, BBS e chat rooms se espalharam.",i:"https://upload.wikimedia.org/wikipedia/commons/f/f9/56k_Modem.jpg"},
-{t:"Web",x:"Tim Berners‑Lee lança o primeiro browser (1990). HTML 2.0 e CSS 1.0 começam a padronizar o layout.",i:"https://upload.wikimedia.org/wikipedia/commons/5/5f/WorldWideWeb_FSF_GNU.png"},
-{t:"Pentium (1993)",x:"A Intel lança o Pentium, abrindo caminho para aplicações multimídia e CAD mais rápidas.",i:"https://upload.wikimedia.org/wikipedia/commons/d/d3/Intel_Pentium_A80501.jpg"},
-{t:"Multimídia",x:"CD‑ROMs, editores de imagem como Photoshop 1.0 e players de MIDI mudam o consumo de mídia.",i:"https://upload.wikimedia.org/wikipedia/en/2/20/Adobe_Photoshop_1.0.png"}
+{t:"Expansão da Internet",x:"No início dos anos 90, a conexão dial‑up popularizou o acesso doméstico. ISPs locais, BBS e chat rooms se espalharam.",i:"https://files.tecnoblog.net/wp-content/uploads/2018/10/internet-discada-768x384.gif"},
+{t:"Web",x:"Tim Berners‑Lee lança o primeiro browser (1990). HTML 2.0 e CSS 1.0 começam a padronizar o layout.",i:"https://s2-extra.glbimg.com/gm2qU0nUhd2HcEge6rzTn64bhes=/0x0:1240x826/888x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_1f551ea7087a47f39ead75f64041559a/internal_photos/bs/2024/a/k/DmobYPSYCw0aBoXTNN4Q/tim-berners-lee.jpg"},
+{t:"Pentium (1993)",x:"A Intel lança o Pentium, abrindo caminho para aplicações multimídia e CAD mais rápidas.",i:"https://t.ctcdn.com.br/NfmXyQrmEwyOB8gSuiaWxuQHyXA=/1024x576/smart/i965305.png"},
+{t:"Multimídia",x:"CD‑ROMs, editores de imagem como Photoshop 1.0 e players de MIDI mudam o consumo de mídia.",i:"https://i.ytimg.com/vi/bkR1NBv8TDE/maxresdefault.jpg"}
 ];
 let i=0;const elT=document.getElementById('s-title');const elX=document.getElementById('s-text');const elI=document.getElementById('s-img');
 function render(){const s=slides[i];elT.textContent=s.t;elX.textContent=s.x;elI.src=s.i;elI.alt=s.t}
@@ -80,6 +263,46 @@ render();
 
 const fullBtn=document.getElementById('btn-full');
 fullBtn.onclick=()=>{const r=document.documentElement;if(!document.fullscreenElement){r.requestFullscreen?.()}else{document.exitFullscreen?.()}}
+
+    // Partículas em Canvas
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let w, h, particles = [];
+    function resize() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * w;
+        this.y = Math.random() * h;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.size = Math.random() * 2;
+      }
+      update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+      }
+    }
+    function initParticles(count = 150) {
+      particles = [];
+      for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    window.addEventListener('resize', () => { resize(); initParticles(); });
+    resize(); initParticles(); animate();
+
+
 </script>
 </body>
 </html>

@@ -34,7 +34,7 @@
 <body>
   <div class="grid">
     <header>
-      <h1>🏁 Quiz 90s — HOST</h1>
+      <h1>Quiz 90s — HOST</h1>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap">
         <a class="btn" href="index.html">⬅️ Voltar aos Slides</a>
         <button class="btn" id="btn-full">⛶ Tela inteira</button>
@@ -81,9 +81,9 @@
 
     const quizData = [
       { q:"Qual protocolo popularizou a Internet nos anos 90?", opts:["HTTP","TCP/IP","FTP"], a:1 },
-      { q:"Quem criou o primeiro navegador?", opts:["Bill Gates","Tim Berners-Lee","Steve Jobs"], a:1 },
-      { q:"Em que ano a Intel lançou o Pentium?", opts:["1993","2000","1989"], a:0 },
-      { q:"Qual software de imagem surgiu nos anos 90?", opts:["Photoshop 1.0","Paint 3D","Gimp 2020"], a:0 }
+      { q:"Qual é a linguagem de marcação base da World Wide Web, desenvolvida originalmente por Tim Berners-Lee?", opts:["HTML","XML","SGML"], a:0 },
+      { q:"Qual foi a principal inovação arquitetural do processador Intel Pentium em relação à geração 486?", opts:["Barramento de memória de 128 bits","Dual-pipeline superscalar","Conjunto de instruções RISC"], a:1 },
+      { q:"Qual a quantidade de armazenamento tinha um CD-ROM?", opts:["2kb","10GB","700MB"], a:2 }
     ];
 
     let currentIndex = -1;
@@ -170,7 +170,7 @@
     onValue(ref(db,'scores'), snap=>{
       const data=snap.val()||{};
       const list=Object.entries(data).sort((a,b)=>b[1]-a[1]);
-      elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=8?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
+      elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=4?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
     });
 
     const playerUrl = new URL('player.html', location.href).href;
