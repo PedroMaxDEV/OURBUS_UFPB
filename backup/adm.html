@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Quiz 90s — HOST</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- QRCode lib (global) -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
@@ -65,6 +66,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, runTransaction, onChildAdded, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
 
+    const showError = (msg) => {
+      const e = document.getElementById('error');
+      e.textContent = "⚠️ " + msg;
+      e.style.display = 'block';
+      console.error(msg);
+    };
+
     const firebaseConfig = {
       apiKey: "AIzaSyDffGKwazMR-P2Bb6459T7IrT_gehEdjwo",
       authDomain: "works-63725.firebaseapp.com",
@@ -76,19 +84,22 @@
       measurementId: "G-4V14Z21393"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
+    let app, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      db  = getDatabase(app);
+    } catch (err) {
+      showError("Erro ao iniciar Firebase: " + err.message);
+    }
 
     const quizData = [
       { q:"Qual protocolo popularizou a Internet nos anos 90?", opts:["HTTP","TCP/IP","FTP"], a:1 },
-      { q:"Quem criou o primeiro navegador?", opts:["Bill Gates","Tim Berners-Lee","Steve Jobs"], a:1 },
+      { q:"Quem criou o primeiro navegador?", opts:["Bill Gates","Tim Berners‑Lee","Steve Jobs"], a:1 },
       { q:"Em que ano a Intel lançou o Pentium?", opts:["1993","2000","1989"], a:0 },
       { q:"Qual software de imagem surgiu nos anos 90?", opts:["Photoshop 1.0","Paint 3D","Gimp 2020"], a:0 }
     ];
 
     let currentIndex = -1;
-    let showingResults = false;
-
     const elQ    = document.getElementById('question');
     const elOpts = document.getElementById('options');
     const elRes  = document.getElementById('results');
@@ -108,41 +119,38 @@
     }
 
     async function loadQuestion(){
-      if(showingResults){
-        showingResults = false;
-        await nextQuestion();
-      } else {
-        showingResults = true;
-        updateBars();
+      try {
+        currentIndex = (currentIndex + 1) % quizData.length;
+        const q = quizData[currentIndex];
+        await set(ref(db,'currentQuestion'),{question:q.q,options:q.opts,index:currentIndex,answer:q.a});
+        await remove(ref(db,'answers'));
+        await set(ref(db,'gameOver'),false);
+        renderQuestion();
+      } catch (err) {
+        showError("Falha publicando pergunta: " + err.message);
       }
-    }
-
-    async function nextQuestion(){
-      currentIndex++;
-      if(currentIndex >= quizData.length){
-        await set(ref(db,'gameOver'),true);
-        elQ.textContent = "🎉 Fim de jogo!";
-        elOpts.innerHTML = '';
-        elRes.innerHTML = '';
-        return;
-      }
-      const q = quizData[currentIndex];
-      await set(ref(db,'currentQuestion'),{question:q.q,options:q.opts,index:currentIndex,answer:q.a});
-      await remove(ref(db,'answers'));
-      await set(ref(db,'gameOver'),false);
-      renderQuestion();
     }
 
     document.getElementById('next').onclick = loadQuestion;
+    document.getElementById('btn-full').onclick = ()=>{
+      const r=document.documentElement;
+      if(!document.fullscreenElement){ r.requestFullscreen?.() } else { document.exitFullscreen?.() }
+    };
 
+    // Atualiza barras ao receber respostas
     onChildAdded(ref(db,'answers'), async snap=>{
-      const ans = snap.val();
-      const qSnap = await get(ref(db,'currentQuestion'));
-      const curr = qSnap.val();
-      if(!curr) return;
-      if(ans.qIndex !== curr.index) return;
-      if(ans.option === quizData[curr.index].a && ans.player){
-        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+      try {
+        const ans = snap.val();
+        const qSnap = await get(ref(db,'currentQuestion'));
+        const curr = qSnap.val();
+        if(!curr) return;
+        if(ans.qIndex !== curr.index) return;
+        if(ans.option === quizData[curr.index].a && ans.player){
+          await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+        }
+        updateBars();
+      } catch (err) {
+        showError("Erro processando resposta: " + err.message);
       }
     });
 
@@ -161,12 +169,14 @@
       });
     }
 
+    // Ranking em tempo real
     onValue(ref(db,'scores'), snap=>{
       const data=snap.val()||{};
       const list=Object.entries(data).sort((a,b)=>b[1]-a[1]);
       elRank.innerHTML=list.map(([n,p])=>`<p>${n}: ${p}${p>=4?" 🏆":""}</p>`).join('') || '<p>Ninguém pontuou ainda.</p>';
     });
 
+    // QRCode dinâmico para o player
     const playerUrl = new URL('player.html', location.href).href;
     document.getElementById('game-link').textContent = playerUrl;
     if (window.QRCode && document.getElementById('qrcode')) {
