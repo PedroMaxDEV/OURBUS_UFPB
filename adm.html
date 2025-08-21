@@ -142,8 +142,14 @@
       if(!curr) return;
       if(ans.qIndex !== curr.index) return;
       if(ans.option === quizData[curr.index].a && ans.player){
-        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
-      }
+  const markRef = ref(db, 'answered/' + curr.index + '/' + ans.player);
+  const markSnap = await get(markRef);
+  if (!markSnap.exists()) {
+    await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
+    await set(markRef, true);
+  }
+}
+
     });
 
     function updateBars(){
