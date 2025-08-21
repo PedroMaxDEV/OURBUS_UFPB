@@ -142,7 +142,7 @@
       if(!curr) return;
       if(ans.qIndex !== curr.index) return;
       if(ans.option === quizData[curr.index].a && ans.player){
-        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0) );
+        await runTransaction(ref(db,'scores/'+ans.player), (val)=> (val||0)+1 );
       }
     });
 
